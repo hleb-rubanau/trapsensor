@@ -30,26 +30,26 @@ cols = COLS
 rows = ROWS
 n_mines = N_MINES
 
-gfx=love.graphics
+gfx = love.graphics
 
 screen_w, screen_h = gfx.getDimensions()
 fonts = {
   status = gfx.newFont(STATUS_FONT),
-  cell   = gfx.newFont(CELL_FONT)
+  cell = gfx.newFont(CELL_FONT)
 }
 
 cell_fh = font.getHeight(fonts.cell)
 status_fh = font.getHeight(fonts.status)
 
 padding = status_fh
-hint_start = screen_h - padding - status_fh
-status_start = hint_start - padding - status_fh
+hint_start = (screen_h - padding) - status_fh
+status_start = (hint_start - padding) - status_fh
 
-field_size = cols*CELL_SIZE
+field_size = cols * CELL_SIZE
 field_x = (screen_w - field_size) / 2
-field_y = (status_start - padding - field_size)/2
+field_y = ((status_start - padding) - field_size) / 2
 
-cells = cols*rows
+cells = cols * rows
 
 --- runtime variables
 state = { }
@@ -63,7 +63,7 @@ function newCell()
     flagged = false,
     mine = nil,
     exposed = false,
-    blown = false,
+    blown = false
   }
   return cell
 end
@@ -80,16 +80,14 @@ function flowInitGrid()
 end
 
 function flowInitState()
-  state.status = 'ready'
+  state.status = "ready"
   state.result = nil
   state.started = nil
-
   counters.revealed = 0
-  counters.seconds =  0
+  counters.seconds = 0
   counters.clicks = 0
   counters.pending = 0
   counters.mines = 0
-
   flowInitGrid()
 end
 
@@ -105,14 +103,14 @@ for i = -1, 1 do
 end
 
 function cell_filter(cells, filter)
-   local iterator = function()
-     local row, col = cells()
-     if filter(row, col) then
-       return row, col
-     end
-     return iterator()
-   end
-   return iterator()
+  local iterator = function()
+    local row, col = cells()
+    if filter(row, col) then
+      return row, col
+    end
+    return iterator()
+  end
+  return iterator()
 end
 
 function between(low, mid, high)
@@ -168,19 +166,19 @@ function all_cells()
   local row, col = 1, 0
   return function()
     col = col + 1
-    if col > cols then
-       col = 1
-       row = row + 1
-       if row > rows then
-         return nil
-       end
+    if cols < col then
+      col = 1
+      row = row + 1
+      if rows < row then
+        return nil
+      end
     end
     return row, col
   end
 end
 
 function far(a, b)
-  return math.abs(a - b) > 1
+  return 1 < math.abs(a - b)
 end
 
 function far_cell(row, col)
@@ -208,10 +206,9 @@ function flowMinesPlacement(i, j)
   end
 end
 
-function flowStart(i,j)
-  flowMinesPlacement(i,j)
-
-  state.status = 'started'
+function flowStart(i, j)
+  flowMinesPlacement(i, j)
+  state.status = "started"
   state.started = os.time()
   counters.clicks = 0
   counters.seconds = 0
@@ -221,7 +218,6 @@ function flowStart(i,j)
   counters.pending = cells - n_mines
 end
 
-
 function flowUpdateTimer()
   if state.started then
     counters.seconds = os.time() - state.started
@@ -229,7 +225,7 @@ function flowUpdateTimer()
 end
 
 -- blow or reveal
-function flowCheckCell(i,j)
+function flowCheckCell(i, j)
   local cell = grid[i][j]
   if cell.mine then
     cell.blown = true
@@ -241,71 +237,66 @@ function flowCheckCell(i,j)
   end
 end
 
-function flowEvaluateGameStatus(i,j)
+function flowEvaluateGameStatus(i, j)
   if counters.pending == 0 then
-    state.status = 'finished'
-    state.result = 'win'
+    state.status = "finished"
+    state.result = "win"
   end
-
-  if counters.blown > 0 then
-    state.status = 'finished'
-    state.result = 'lost'
+  if 0 < counters.blown then
+    state.status = "finished"
+    state.result = "lost"
     for n, cell in ipairs(mines) do
       cell.exposed = true
     end
   end
 end
 
-function flowReveal(i,j)
-  flowCheckCell(i,j)
-  flowEvaluateGameStatus(i,j)
+function flowReveal(i, j)
+  flowCheckCell(i, j)
+  flowEvaluateGameStatus(i, j)
 end
 
 actionInit = flowInitState
 
-function actionFlag(i,j)
+function actionFlag(i, j)
   local cell = grid[i][j]
-
-  if not(cell.revealed) then
-    cell.flagged = not(cell.flagged)
-
+  if not (cell.revealed) then
+    cell.flagged = not (cell.flagged)
     local adjust = cell.flagged and 1 or -1
     counters.flagged = counters.flagged + adjust
-
     flowUpdateTimer()
   end
 end
 
-function actionReveal(i,j)
-  local game_not_started = (state.status == 'ready')
+function actionReveal(i, j)
+  local game_not_started = (state.status == "ready")
   if game_not_started then
-    flowStart(i,j)
+    flowStart(i, j)
   end
-
   local cell = grid[i][j]
-  local can_be_revealed = not( cell.revealed or cell.flagged )
+  local can_be_revealed = not (cell.revealed or cell.flagged)
   if can_be_revealed then
-    flowReveal(i,j)
+    flowReveal(i, j)
   end
   flowUpdateTimer()
 end
 
-function isPointInGameField(x,y)
+function isPointInGameField(x, y)
   local x_min = field_x
   local x_max = field_x + field_size
   local y_min = field_y
   local y_max = field_y + field_size
-  local x_valid = ( x >= x_min ) and ( x <= x_max )
-  local y_valid = ( y >= y_min ) and ( y <= y_max )
+  local x_valid = (x_min <= x) and (x <= x_max)
+  local y_valid = (y_min <= y) and (y <= y_max)
   return x_valid and y_valid
 end
 
-function detectCellPosition(x,y)
+function detectCellPosition(x, y)
   local x_rel = x - field_x
   local y_rel = y - field_y
   local c = CELL_SIZE
-  local i = math.ceil( x_rel / c )
-  local j = math.ceil( y_rel / c )
+  local i = math.ceil(x_rel / c)
+  local j = math.ceil(y_rel / c)
   -- corner cases, left boundary still is cell
   if x_rel == 0 then
     i = 1
@@ -313,34 +304,34 @@ function detectCellPosition(x,y)
   if y_rel == 0 then
     j = 1
   end
-  return i,j
+  return i, j
 end
 
-function love.singleclick(x,y)
-  if state.status=='started' then
+function love.singleclick(x, y)
+  if state.status == "started" then
     flowUpdateTimer()
-    if isPointInGameField(x,y) then
-      local i, j = detectCellPosition(x,y)
-      actionFlag(i,j)
+    if isPointInGameField(x, y) then
+      local i, j = detectCellPosition(x, y)
+      actionFlag(i, j)
     end
   end
 end
 
-function love.doubleclick(x,y)
-  if state.status=='finished' then
+function love.doubleclick(x, y)
+  if state.status == "finished" then
     actionInit()
   else
     flowUpdateTimer()
-    if isPointInGameField(x,y) then
-      local i, j = detectCellPosition(x,y)
-      actionReveal(i,j)
+    if isPointInGameField(x, y) then
+      local i, j = detectCellPosition(x, y)
+      actionReveal(i, j)
     end
   end
 end
 
 function getStatusLine()
   local msg = nil
-  if not(state.status == 'ready') then
+  if state.status ~= "ready" then
     local r = counters.revealed
     local p = counters.pending
     local f = counters.flagged
@@ -354,15 +345,14 @@ function getStatusLine()
 end
 
 function getHintsLine()
-  if state.status == 'ready' then
-    return 'Double-click to start'
+  if state.status == "ready" then
+    return "Double-click to start"
   end
-  if state.status == 'started' then
-    return 'Click to flag, double-click to open'
+  if state.status == "started" then
+    return "Click to flag, double-click to open"
   end
-
   local result = string.upper(state.result)
-  return result.."! (double-click to restart)"
+  return result .. "! (double-click to restart)"
 end
 
 function redrawStatus()
@@ -371,14 +361,13 @@ function redrawStatus()
   gfx.setFont(fonts.status)
   if status then
     gfx.setColor(COLOR.status)
-    gfx.printf( status, 0, status_start, screen_w, 'center')
+    gfx.printf(status, 0, status_start, screen_w, "center")
   end
   if hint then
     gfx.setColor(COLOR.hint)
-    gfx.printf( hint, 0, hint_start, screen_w, 'center')
+    gfx.printf(hint, 0, hint_start, screen_w, "center")
   end
 end
-
 -- drawing cells
 function getCellRectangle(i,j)
   local cell_x_rel = (i-1)*CELL_SIZE
@@ -422,27 +411,25 @@ function getCellDisplayContent(i, j)
 end
 
 function drawCell(i, j)
-  local coords = getCellRectangle(i,j)
-
+  local coords = getCellRectangle(i, j)
   local bgColor = COLOR.cell_bg_revealed
   local fgColor = COLOR.cell_fg_default
   local content = getCellDisplayContent(i, j)
-
-  renderCell( coords, bgColor, fgColor, content )
+  renderCell(coords, bgColor, fgColor, content)
 end
 
 function redrawField()
-  gfx.setFont( fonts.cell )
+  gfx.setFont(fonts.cell)
   for i = 1, cols do
     for j = 1, rows do
-      drawCell(i,j)
+      drawCell(i, j)
     end
   end
 end
 
 function redraw()
   gfx.setColor(COLOR.background)
-  gfx.rectangle('fill', 0, 0, screen_w, screen_h)
+  gfx.rectangle("fill", 0, 0, screen_w, screen_h)
   redrawField()
   redrawStatus()
 end
