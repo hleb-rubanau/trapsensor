@@ -104,12 +104,45 @@ for i = -1, 1 do
   end
 end
 
-function neighbors(i, j)
+function cell_filter(cells, filter)
+   local iterator = function()
+     local row, col = cells()
+     if filter(row, col) then
+       return row, col
+     end
+     return iterator()
+   end
+   return iterator()
+end
+
+function between(low, mid, high)
+  return (low <= mid) and (mid <= high)
+end
+
+function on_board(i, j)
+  return between(1, i, rows) and between(1, j, cols)
+end
+
+function all_neighbors(i, j)
   local index = 0
   return function()
     index = index + 1
     return col_offset[index] + i, row_offset[index] + j
   end
+end
+
+function neighbors(i, j)
+  return cell_filter(all_neighbors(i, j), on_board)
+end
+
+function mined_neighbors(row, col)
+  local result = 0
+  for i, j in neighbors(row, col) do
+    if grid[i][j].mine then
+      result = result + 1
+    end
+  end
+  return result
 end
 
 function flowPlaceMine(i, j)
@@ -120,20 +153,15 @@ function flowPlaceMine(i, j)
   counters.mines = counters.mines + 1
 end
 
-forbidden_cells = {
-  9,
-  6,
-  4
-}
+function dimension(i, limit)
+  if (i == 1) or (i == limit) then
+    return 2
+  end
+  return 3
+end
+
 function forbidden(i, j)
-  local extremes = 1
-  if (i == 0) or (i == rows) then
-    extremes = extremes + 1
-  end
-  if (j == 0) or (j == cols) then
-    extremes = extremes + 1
-  end
-  return forbidden_cells[extremes]
+  return dimension(i, rows) * dimension(j, cols)
 end
 
 function all_cells()
@@ -155,16 +183,14 @@ function far(a, b)
   return math.abs(a - b) > 1
 end
 
-function allowed_cells(i, j)
-  local all = all_cells()
-  local iterator = function()
-    local row, col = all()
-    if far(row, i) and far(col, j) then
-      return row, col
-    end
-    return iterator()
+function far_cell(row, col)
+  return function(i, j)
+    return far(row, i) and far(col, j)
   end
-  return iterator
+end
+
+function allowed_cells(i, j)
+  return cell_filter(all_cells, far_cell(i, j))
 end
 
 -- [i,j] is the firt click index, guaranteed to be safe zone
@@ -235,9 +261,7 @@ function flowReveal(i,j)
   flowEvaluateGameStatus(i,j)
 end
 
-function actionInit()
-  flowInitState()
-end
+actionInit = flowInitState
 
 function actionFlag(i,j)
   local cell = grid[i][j]
@@ -377,41 +401,8 @@ function renderCell(coords, bgcolor, fgcolor, txt)
   end
 end
 
-function getCellBackgroundColor(cell)
-  if cell.flagged then
-    return COLOR.cell_bg_flagged
-  elseif cell.blown then
-    return COLOR.cell_bg_blown
-  elseif cell.revealed then
-    return COLOR.cell_bg_revealed
-  else
-    return COLOR.cell_bg_not_revealed
-  end
-end
-
-function getMinesAroundColor(n_mines_nearby)
-  for v = 8,1,-1 do
-    if n_mines_nearby >= v then
-      local color_name = "cell_fg_revealed_"..v
-      if COLOR[color_name] then
-        return COLOR[color_name]
-      end
-    end
-  end
-  return COLOR.cell_fg_default
-end
-
-function getCellForegroundColor(cell)
-  if cell.flagged then
-    return COLOR.cell_fg_flagged
-  end
-  if cell.mine then
-    return COLOR.cell_fg_mine
-  end
-  return getMinesAroundColor(cell.n_mines_nearby)
-end
-
-function getCellDisplayContent(cell)
+function getCellDisplayContent(i, j)
+  local cell = grid[i][j]
   local is_exposed_mine = cell.mine and cell.exposed
 
   if cell.blown then
@@ -421,21 +412,21 @@ function getCellDisplayContent(cell)
   elseif cell.flagged then
     return '?'
   elseif cell.revealed then
-    if cell.n_mines_nearby > 0 then
-      return ''..cell.n_mines_nearby
+    local n_mines_nearby = mined_neighbors(i, j)
+    if nearby > 0 then
+      return ''..n_mines_nearby
     end
   end
 
   return false
 end
 
-function drawCell(i,j)
-  local cell = grid[i][j]
+function drawCell(i, j)
   local coords = getCellRectangle(i,j)
 
-  local bgColor = getCellBackgroundColor(cell)
-  local fgColor = getCellForegroundColor(cell)
-  local content = getCellDisplayContent(cell)
+  local bgColor = COLOR.cell_bg_revealed
+  local fgColor = COLOR.cell_fg_default
+  local content = getCellDisplayContent(i, j)
 
   renderCell( coords, bgColor, fgColor, content )
 end
@@ -456,8 +447,6 @@ function redraw()
   redrawStatus()
 end
 
-function love.draw()
-  redraw()
-end
+love.draw = redraw
 
 actionInit()
