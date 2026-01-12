@@ -64,7 +64,6 @@ function newCell()
     mine = nil,
     exposed = false,
     blown = false,
-    n_mines_nearby = 0,
   }
   return cell
 end
@@ -72,7 +71,7 @@ end
 function flowInitGrid()
   grid = { }
   for i = 1, cols do
-    local col = {}
+    local col = { }
     for j = 1, rows do
       col[j] = newCell()
     end
@@ -94,65 +93,92 @@ function flowInitState()
   flowInitGrid()
 end
 
-function getNeighborPositions(i, j)
-  local result = { }
-  local i_min = math.max(i-1, 1)
-  local i_max = math.min(i+1, cols)
-  local j_min = math.max(j-1, 1)
-  local j_max = math.min(j+1, rows)
-  for n = i_min, i_max do
-    for m = j_min, j_max do
-      local is_original = (n==i) and (m==j)
-      if not is_original then
-        table.insert(result, {n,m})
-      end
+col_offset = { }
+row_offset = { }
+for i = -1, 1 do
+  for j = -1, 1 do
+    if (i ~= 0) or (j ~= 0) then
+      table.insert(col_offset, i)
+      table.insert(row_offset, j)
     end
   end
-  return result
 end
 
-function getNonNeighborPositions(i, j)
-  local result = { }
-  for n = 1, cols do
-    local i_near = math.abs( i - n ) <= 1
-    for m = 1, rows do
-      local j_near = math.abs( j - m ) <= 1
-      local proximity = i_near and j_near
-      if not proximity then
-        table.insert(result, {n,m})
-      end
-    end
+function neighbors(i, j)
+  local index = 0
+  return function()
+    index = index + 1
+    return col_offset[index] + i, row_offset[index] + j
   end
-  return result
 end
 
-function flowPlaceMine(i,j)
+function flowPlaceMine(i, j)
   local cell = grid[i][j]
   cell.mine = true
-  table.insert( mines, cell ) -- for later reference
-  counters.mines = counters.mines+1
-  local neighbors = getNeighborPositions(i,j)
-  for idx, position in ipairs(neighbors) do
-    local pos_i, pos_j = unpack(position)
-    local neighbor = grid[ pos_i ][ pos_j ]
-    neighbor.n_mines_nearby = neighbor.n_mines_nearby + 1
+  -- for later reference
+  table.insert(mines, cell)
+  counters.mines = counters.mines + 1
+end
+
+forbidden_cells = {
+  9,
+  6,
+  4
+}
+function forbidden(i, j)
+  local extremes = 1
+  if (i == 0) or (i == rows) then
+    extremes = extremes + 1
   end
+  if (j == 0) or (j == cols) then
+    extremes = extremes + 1
+  end
+  return forbidden_cells[extremes]
+end
+
+function all_cells()
+  local row, col = 1, 0
+  return function()
+    col = col + 1
+    if col > cols then
+       col = 1
+       row = row + 1
+       if row > rows then
+         return nil
+       end
+    end
+    return row, col
+  end
+end
+
+function far(a, b)
+  return math.abs(a - b) > 1
+end
+
+function allowed_cells(i, j)
+  local all = all_cells()
+  local iterator = function()
+    local row, col = all()
+    if far(row, i) and far(col, j) then
+      return row, col
+    end
+    return iterator()
+  end
+  return iterator
 end
 
 -- [i,j] is the firt click index, guaranteed to be safe zone
-function flowMinesPlacement(i,j)
+function flowMinesPlacement(i, j)
+  local mines_to_place = n_mines
+  local cells_to_mine = cols * rows - forbidden_cells(i, j)
   math.randomseed(os.time())
-  local positions = getNonNeighborPositions( i, j )
-  local n = #positions
-  local m = math.min( n_mines, n )
-  for ipos, pos in ipairs(positions) do
-    local p = (m / n)
-    local selected = math.random() < p
-    if selected then
-      flowPlaceMine( unpack(pos) )
-      m = m - 1
+  for row, col in allowed_cells(i, j) do
+    local p = mines_to_place / cells_to_mine
+    if math.random() < p then
+      mines_to_place = mines_to_place - 1
+      flowPlaceMine(i, j)
     end
-    n = n - 1
+    cells_to_mine = cells_to_mine - 1
   end
 end
 
