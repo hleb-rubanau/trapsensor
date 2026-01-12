@@ -1,34 +1,41 @@
-cols = 9
-rows = 9
-n_traps = 12
-cell_size = 32
-cell_font = 28
-status_font = 24
+COLS = 9
+ROWS = 9
+N_MINES = 12
+CELL_SIZE = 32
+CELL_FONT = 28
+STATUS_FONT = 24
+
+COLOR = { }
+COLOR.background = Color[Color.black]
+COLOR.status = Color[Color.green]
+COLOR.hint = Color[Color.yellow]
+COLOR.cell_border = Color[Color.white]
+COLOR.cell_bg_not_revealed = {
+  0.5,
+  0.5,
+  0.5
+}
+COLOR.cell_bg_revealed = Color[Color.green]
+COLOR.cell_bg_flagged = Color[Color.yellow]
+COLOR.cell_bg_blown = Color[Color.red]
+COLOR.cell_fg_mine = Color[Color.black]
+COLOR.cell_fg_flagged = Color[Color.red]
+COLOR.cell_fg_default = Color[Color.blue]
+COLOR.cell_fg_revealed_1 = Color[Color.white]
+COLOR.cell_fg_revealed_2 = Color[Color.black]
+COLOR.cell_fg_revealed_3 = Color[Color.magenta]
+COLOR.cell_fg_revealed_4 = Color[Color.red]
+
+cols = COLS
+rows = ROWS
+n_mines = N_MINES
 
 gfx=love.graphics
 
-colors = {
-  background = Color[Color.black],
-  status = Color[Color.green],
-  hint = Color[Color.yellow],
-  cell_border = Color[Color.white],
-  cell_bg_not_revealed = { 0.5, 0.5, 0.5 },
-  cell_bg_revealed = Color[Color.green],
-  cell_bg_flagged = Color[Color.yellow],
-  cell_bg_blown = Color[Color.red],
-  cell_fg_trap = Color[Color.black],
-  cell_fg_flagged = Color[Color.red],
-  cell_fg_default = Color[Color.blue],
-  cell_fg_revealed_1 = Color[Color.white],
-  cell_fg_revealed_2 = Color[Color.black],
-  cell_fg_revealed_3 = Color[Color.magenta],
-  cell_fg_revealed_4 = Color[Color.red]
-}
-
 screen_w, screen_h = gfx.getDimensions()
 fonts = {
-  status = gfx.newFont(status_font),
-  cell   = gfx.newFont(cell_font)
+  status = gfx.newFont(STATUS_FONT),
+  cell   = gfx.newFont(CELL_FONT)
 }
 
 cell_fh = font.getHeight(fonts.cell)
@@ -38,7 +45,7 @@ padding = status_fh
 hint_start = screen_h - padding - status_fh
 status_start = hint_start - padding - status_fh
 
-field_size = cols*cell_size
+field_size = cols*CELL_SIZE
 field_x = (screen_w - field_size) / 2
 field_y = (status_start - padding - field_size)/2
 
@@ -48,16 +55,16 @@ cells = cols*rows
 state = { }
 grid = { }
 counters = { }
-traps = { }
+mines = { }
 
 function newCell()
   local cell = {
     revealed = false,
     flagged = false,
-    trap = nil,
+    mine = nil,
     exposed = false,
     blown = false,
-    n_traps_nearby = 0,
+    n_mines_nearby = 0,
   }
   return cell
 end
@@ -82,7 +89,7 @@ function flowInitState()
   counters.seconds =  0
   counters.clicks = 0
   counters.pending = 0
-  counters.traps = 0
+  counters.mines = 0
 
   flowInitGrid()
 end
@@ -119,32 +126,32 @@ function getNonNeighbourPositions(i, j)
   return result
 end
 
-function flowPlaceTrap(i,j)
+function flowPlaceMine(i,j)
   local cell = grid[i][j]
-  cell.trap = true
+  cell.mine = true
 
-  table.insert( traps, cell ) -- for later reference
-  counters.traps = counters.traps+1
+  table.insert( mines, cell ) -- for later reference
+  counters.mines = counters.mines+1
 
   local neighbours = getNeighbourPositions(i,j)
   for idx, position in ipairs(neighbours) do
     local pos_i, pos_j = unpack(position)
     local neighbour = grid[ pos_i ][ pos_j ]
-    neighbour.n_traps_nearby = neighbour.n_traps_nearby + 1
+    neighbour.n_mines_nearby = neighbour.n_mines_nearby + 1
   end
 end
 
 -- [i,j] is the firt click index, guaranteed to be safe zone
-function flowTrapsPlacement(i,j)
+function flowMinesPlacement(i,j)
   math.randomseed(os.time())
   local positions = getNonNeighbourPositions( i, j )
   local n = #positions
-  local m = math.min( n_traps, n )
+  local m = math.min( n_mines, n )
   for ipos, pos in ipairs(positions) do
     local p = (m / n)
     local selected = math.random() < p
     if selected then
-      flowPlaceTrap( unpack(pos) )
+      flowPlaceMine( unpack(pos) )
       m = m - 1
     end
     n = n - 1
@@ -152,7 +159,7 @@ function flowTrapsPlacement(i,j)
 end
 
 function flowStart(i,j)
-  flowTrapsPlacement(i,j)
+  flowMinesPlacement(i,j)
 
   state.status = 'started'
   state.started = os.time()
@@ -161,7 +168,7 @@ function flowStart(i,j)
   counters.revealed = 0
   counters.flagged = 0
   counters.blown = 0
-  counters.pending = cells - n_traps
+  counters.pending = cells - n_mines
 end
 
 
@@ -174,7 +181,7 @@ end
 -- blow or reveal
 function flowCheckCell(i,j)
   local cell = grid[i][j]
-  if cell.trap then
+  if cell.mine then
     cell.blown = true
     counters.blown = counters.blown + 1
   else
@@ -193,7 +200,7 @@ function flowEvaluateGameStatus(i,j)
   if counters.blown > 0 then
     state.status = 'finished'
     state.result = 'lost'
-    for n, cell in ipairs(traps) do
+    for n, cell in ipairs(mines) do
       cell.exposed = true
     end
   end
@@ -248,7 +255,7 @@ end
 function detectCellPosition(x,y)
   local x_rel = x - field_x
   local y_rel = y - field_y
-  local c = cell_size
+  local c = CELL_SIZE
   local i = math.ceil( x_rel / c )
   local j = math.ceil( y_rel / c )
   -- corner cases, left boundary still is cell
@@ -289,7 +296,7 @@ function getStatusLine()
     local r = counters.revealed
     local p = counters.pending
     local f = counters.flagged
-    local t = counters.traps
+    local t = counters.mines
     local s = counters.seconds
     local fmt = string.format
     local template = "Flags: %s/%s | Open: %s/%s | Sec: %s"
@@ -315,19 +322,19 @@ function redrawStatus()
   local hint = getHintsLine()
   gfx.setFont(fonts.status)
   if status then
-    gfx.setColor(colors.status)
+    gfx.setColor(COLOR.status)
     gfx.printf( status, 0, status_start, screen_w, 'center')
   end
   if hint then
-    gfx.setColor(colors.hint)
+    gfx.setColor(COLOR.hint)
     gfx.printf( hint, 0, hint_start, screen_w, 'center')
   end
 end
 
 -- drawing cells
 function getCellRectangle(i,j)
-  local cell_x_rel = (i-1)*cell_size
-  local cell_y_rel = (j-1)*cell_size
+  local cell_x_rel = (i-1)*CELL_SIZE
+  local cell_y_rel = (j-1)*CELL_SIZE
   local cell_x = field_x + cell_x_rel
   local cell_y = field_y + cell_y_rel
   return { cell_x, cell_y }
@@ -336,62 +343,62 @@ end
 function renderCell(coords, bgcolor, fgcolor, txt)
   local cell_x, cell_y = unpack(coords)
   gfx.setColor( bgcolor )
-  gfx.rectangle('fill', cell_x, cell_y, cell_size, cell_size)
-  gfx.setColor( colors.cell_border )
-  gfx.rectangle('line', cell_x, cell_y, cell_size, cell_size)
+  gfx.rectangle('fill', cell_x, cell_y, CELL_SIZE, CELL_SIZE)
+  gfx.setColor( COLOR.cell_border )
+  gfx.rectangle('line', cell_x, cell_y, CELL_SIZE, CELL_SIZE)
   if txt then
     gfx.setColor( fgcolor )
-    local text_y = cell_y + cell_size*0.5 - cell_fh*0.5
-    gfx.printf( txt, cell_x, text_y, cell_size, 'center' )
+    local text_y = cell_y + CELL_SIZE*0.5 - cell_fh*0.5
+    gfx.printf( txt, cell_x, text_y, CELL_SIZE, 'center' )
   end
 end
 
 function getCellBackgroundColor(cell)
   if cell.flagged then
-    return colors.cell_bg_flagged
+    return COLOR.cell_bg_flagged
   elseif cell.blown then
-    return colors.cell_bg_blown
+    return COLOR.cell_bg_blown
   elseif cell.revealed then
-    return colors.cell_bg_revealed
+    return COLOR.cell_bg_revealed
   else
-    return colors.cell_bg_not_revealed
+    return COLOR.cell_bg_not_revealed
   end
 end
 
-function getTrapsAroundColor(n_traps_nearby)
+function getMinesAroundColor(n_mines_nearby)
   for v = 8,1,-1 do
-    if n_traps_nearby >= v then
+    if n_mines_nearby >= v then
       local color_name = "cell_fg_revealed_"..v
-      if colors[color_name] then
-        return colors[color_name]
+      if COLOR[color_name] then
+        return COLOR[color_name]
       end
     end
   end
-  return colors.cell_fg_default
+  return COLOR.cell_fg_default
 end
 
 function getCellForegroundColor(cell)
   if cell.flagged then
-    return colors.cell_fg_flagged
+    return COLOR.cell_fg_flagged
   end
-  if cell.trap then
-    return colors.cell_fg_trap
+  if cell.mine then
+    return COLOR.cell_fg_mine
   end
-  return getTrapsAroundColor(cell.n_traps_nearby)
+  return getMinesAroundColor(cell.n_mines_nearby)
 end
 
 function getCellDisplayContent(cell)
-  local is_exposed_trap = cell.trap and cell.exposed
+  local is_exposed_mine = cell.mine and cell.exposed
 
   if cell.blown then
     return "X"
-  elseif is_exposed_trap then
+  elseif is_exposed_mine then
     return '*'
   elseif cell.flagged then
     return '?'
   elseif cell.revealed then
-    if cell.n_traps_nearby > 0 then
-      return ''..cell.n_traps_nearby
+    if cell.n_mines_nearby > 0 then
+      return ''..cell.n_mines_nearby
     end
   end
 
@@ -419,7 +426,7 @@ function redrawField()
 end
 
 function redraw()
-  gfx.setColor(colors.background)
+  gfx.setColor(COLOR.background)
   gfx.rectangle('fill', 0, 0, screen_w, screen_h)
   redrawField()
   redrawStatus()
