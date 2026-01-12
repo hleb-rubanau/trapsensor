@@ -94,7 +94,7 @@ function flowInitState()
   flowInitGrid()
 end
 
-function getNeighbourPositions(i, j)
+function getNeighborPositions(i, j)
   local result = { }
   local i_min = math.max(i-1, 1)
   local i_max = math.min(i+1, cols)
@@ -111,7 +111,7 @@ function getNeighbourPositions(i, j)
   return result
 end
 
-function getNonNeighbourPositions(i, j)
+function getNonNeighborPositions(i, j)
   local result = { }
   for n = 1, cols do
     local i_near = math.abs( i - n ) <= 1
@@ -129,22 +129,20 @@ end
 function flowPlaceMine(i,j)
   local cell = grid[i][j]
   cell.mine = true
-
   table.insert( mines, cell ) -- for later reference
   counters.mines = counters.mines+1
-
-  local neighbours = getNeighbourPositions(i,j)
-  for idx, position in ipairs(neighbours) do
+  local neighbors = getNeighborPositions(i,j)
+  for idx, position in ipairs(neighbors) do
     local pos_i, pos_j = unpack(position)
-    local neighbour = grid[ pos_i ][ pos_j ]
-    neighbour.n_mines_nearby = neighbour.n_mines_nearby + 1
+    local neighbor = grid[ pos_i ][ pos_j ]
+    neighbor.n_mines_nearby = neighbor.n_mines_nearby + 1
   end
 end
 
 -- [i,j] is the firt click index, guaranteed to be safe zone
 function flowMinesPlacement(i,j)
   math.randomseed(os.time())
-  local positions = getNonNeighbourPositions( i, j )
+  local positions = getNonNeighborPositions( i, j )
   local n = #positions
   local m = math.min( n_mines, n )
   for ipos, pos in ipairs(positions) do
