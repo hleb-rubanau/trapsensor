@@ -1,6 +1,6 @@
 # Trap Sensor
 
-Trap Sensor is a grid-based puzzle game where players must reveal all safe cells while avoiding hidden traps. The game features configurable difficulty levels, a clean UI with status tracking, and classic Minesweeper mechanics.
+Trap Sensor is a grid-based puzzle game where players must reveal all safe cells while avoiding hidden traps. 
 
 ## Implementations
 
