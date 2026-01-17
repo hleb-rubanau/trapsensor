@@ -2,8 +2,8 @@ cols = 9
 rows = 9
 n_traps = 12
 cell_size = 32
-cell_font = 28
-status_font = 24
+cell_font_size = 28
+status_font_size = 24
 
 gfx=love.graphics
 
@@ -26,16 +26,20 @@ colors = {
 }
 
 screen_w, screen_h = gfx.getDimensions()
+screen_vpad = 0.1
+
 fonts = {
-  status = gfx.newFont(status_font),
-  cell   = gfx.newFont(cell_font)
+  status = gfx.newFont(status_font_size),
+  cell   = gfx.newFont(cell_font_size)
 }
 
-cell_fh = font.getHeight(fonts.cell)
+-- for cell we use glyph height, not font line height
+cell_fh = cell_font_size
 status_fh = font.getHeight(fonts.status)
 
 padding = status_fh
-hint_start = screen_h - padding - status_fh
+lower_edge = screen_h*(1-screen_vpad)
+hint_start = lower_edge - padding - status_fh
 status_start = hint_start - padding - status_fh
 
 field_size = cols*cell_size
@@ -335,8 +339,8 @@ function redrawStatus()
   local hint = getHintsLine()
   
   gfx.setColor(colors.background)
-  local status_h = status_fh * 2 + padding
   local status_y = status_start - padding
+  local status_h = lower_edge - status_y
   gfx.rectangle('fill', 0, status_y, screen_w, status_h)
   
   gfx.setFont(fonts.status)
