@@ -206,6 +206,7 @@ end
 
 function actionInit()
   flowInitState()
+  redraw()
 end
 
 function actionFlag(i,j)
@@ -218,6 +219,8 @@ function actionFlag(i,j)
     counters.flagged = counters.flagged + adjust
 
     flowUpdateTimer()
+    drawCell(i,j)
+    redrawStatus()
   end
 end
 
@@ -231,6 +234,14 @@ function actionReveal(i,j)
   local can_be_revealed = not( cell.revealed or cell.flagged )
   if can_be_revealed then
     flowReveal(i,j)
+    drawCell(i,j)
+    
+    local game_finished = (state.status == 'finished')
+    if game_finished then
+      redrawField()
+    end
+    
+    redrawStatus()
   end
   flowUpdateTimer()
 end
@@ -313,6 +324,12 @@ end
 function redrawStatus()
   local status = getStatusLine()
   local hint = getHintsLine()
+  
+  gfx.setColor(colors.background)
+  local status_h = status_fh * 2 + padding
+  local status_y = status_start - padding
+  gfx.rectangle('fill', 0, status_y, screen_w, status_h)
+  
   gfx.setFont(fonts.status)
   if status then
     gfx.setColor(colors.status)
@@ -423,10 +440,6 @@ function redraw()
   gfx.rectangle('fill', 0, 0, screen_w, screen_h)
   redrawField()
   redrawStatus()
-end
-
-function love.draw()
-  redraw()
 end
 
 actionInit()
