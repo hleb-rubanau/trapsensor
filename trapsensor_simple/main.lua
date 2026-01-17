@@ -7,23 +7,22 @@ status_font_size = 24
 
 gfx = love.graphics
 
-colors = {
-  background = Color[Color.black],
-  status = Color[Color.green],
-  hint = Color[Color.yellow],
-  cell_border = Color[Color.white],
-  cell_bg_not_revealed = { 0.5, 0.5, 0.5 },
-  cell_bg_revealed = Color[Color.green],
-  cell_bg_flagged = Color[Color.yellow],
-  cell_bg_blown = Color[Color.red],
-  cell_fg_trap = Color[Color.black],
-  cell_fg_flagged = Color[Color.red],
-  cell_fg_default = Color[Color.blue],
-  cell_fg_revealed_1 = Color[Color.white],
-  cell_fg_revealed_2 = Color[Color.black],
-  cell_fg_revealed_3 = Color[Color.magenta],
-  cell_fg_revealed_4 = Color[Color.red]
-}
+colors = { }
+colors.background = Color[Color.black],
+colors.status = Color[Color.green],
+colors.hint = Color[Color.yellow],
+colors.cell_border = Color[Color.white],
+colors.cell_bg_not_revealed = { 0.5, 0.5, 0.5 },
+colors.cell_bg_revealed = Color[Color.green],
+colors.cell_bg_flagged = Color[Color.yellow],
+colors.cell_bg_blown = Color[Color.red],
+colors.cell_fg_trap = Color[Color.black],
+colors.cell_fg_flagged = Color[Color.red],
+colors.cell_fg_default = Color[Color.blue],
+colors.cell_fg_revealed_1 = Color[Color.white],
+colors.cell_fg_revealed_2 = Color[Color.black],
+colors.cell_fg_revealed_3 = Color[Color.magenta],
+colors.cell_fg_revealed_4 = Color[Color.red]
 
 screen_w, screen_h = gfx.getDimensions()
 screen_vpad = 0.1
@@ -90,6 +89,7 @@ function flowInitState()
   flowInitGrid()
 end
 
+-- TBD: refactor below 14 lines!
 function getNeighbourPositions(i, j)
   local result = { }
   local i_min = math.max(i - 1, 1)
@@ -110,6 +110,7 @@ function getNeighbourPositions(i, j)
   return result
 end
 
+-- TBD: refactor below 14 lines!
 function getNonNeighbourPositions(i, j)
   local result = { }
   for n = 1, cols do
@@ -128,6 +129,7 @@ function getNonNeighbourPositions(i, j)
   return result
 end
 
+-- TBD: refactor below 14 lines!
 function flowPlaceTrap(i, j)
   local cell = grid[i][j]
   cell.trap = true
@@ -146,6 +148,7 @@ function flowPlaceTrap(i, j)
       end
 end
 
+-- TBD: refactor below 14 lines! (now 15)
 -- [i,j] is the firt click index, guaranteed to be safe zone
 function flowTrapsPlacement(i, j)
   math.randomseed(os.time())
@@ -246,6 +249,7 @@ function actionFlag(i, j)
   end
 end
 
+-- TBD: refactor below 14 lines! (now 15)
 function actionReveal(i, j)
   local game_not_started = (state.status == "ready")
   if game_not_started then
@@ -275,9 +279,8 @@ end
 function detectCellPosition(x, y)
   local x_rel = x - field_x
   local y_rel = y - field_y
-  local c = cell_size
-  local i = math.ceil(x_rel / c)
-  local j = math.ceil(y_rel / c)
+  local i = math.ceil(x_rel / cell_size)
+  local j = math.ceil(y_rel / cell_size)
   -- corner cases, left boundary still is cell
   if x_rel == 0 then
     i = 1
@@ -338,6 +341,7 @@ function getHintsLine()
   return result .. "! (double-click to restart)"
 end
 
+-- TBD: refactor below 14 lines! (now huge)
 function redrawStatus()
   local status = getStatusLine()
   local hint = getHintsLine()
@@ -370,6 +374,7 @@ function getCellRectangle(i, j)
   }
 end
 
+-- TBD: why editor indents 'end' there?
 function renderCell(coords, bgcolor, fgcolor, txt)
   local cell_x, cell_y = unpack(coords)
   gfx.setColor(bgcolor)
@@ -381,8 +386,7 @@ function renderCell(coords, bgcolor, fgcolor, txt)
     local text_y = cell_y + cell_size * 0.5 - cell_fh * 0.5
     gfx.printf(txt, cell_x, text_y, cell_size, "center")
   end
-
-    end
+end
 
 function getCellBackgroundColor(cell)
   if cell.flagged then
@@ -420,7 +424,6 @@ end
 
 function getCellDisplayContent(cell)
   local is_exposed_trap = cell.trap and cell.exposed
-
   if cell.blown then
     return "X"
   elseif is_exposed_trap then
@@ -432,8 +435,6 @@ function getCellDisplayContent(cell)
       return ''..cell.n_traps_nearby
     end
   end
-
-  return false
 end
 
 function drawCell(i, j)
