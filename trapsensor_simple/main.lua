@@ -123,7 +123,7 @@ function flowPlaceTrap(i,j)
   local cell = grid[i][j]
   cell.trap = true
 
-  table.insert( traps, cell ) -- for later reference
+  table.insert( traps, {i,j} ) -- for later reference
   counters.traps = counters.traps+1
 
   local neighbours = getNeighbourPositions(i,j)
@@ -184,6 +184,13 @@ function flowCheckCell(i,j)
   end
 end
 
+function flowExpose()
+  for _, cell_index in ipairs(traps) do
+    local i, j = unpack( cell_index )
+    grid[i][j].exposed=true
+  end
+end
+
 function flowEvaluateGameStatus(i,j)
   if counters.pending == 0 then
     state.status = 'finished'
@@ -193,15 +200,28 @@ function flowEvaluateGameStatus(i,j)
   if counters.blown > 0 then
     state.status = 'finished'
     state.result = 'lost'
-    for n, cell in ipairs(traps) do
-      cell.exposed = true
-    end
+    flowExpose()
   end
 end
 
 function flowReveal(i,j)
   flowCheckCell(i,j)
   flowEvaluateGameStatus(i,j)
+  return (state.status == 'finished')
+end
+
+function flowToggleFlag(i,j)
+  local cell = grid[i][j]
+  cell.flagged = not(cell.flagged)
+  local adjust = cell.flagged and 1 or -1
+  counters.flagged = counters.flagged + adjust
+end
+
+function drawExposedCells()
+  for _, trap_cell_index in ipairs(traps) do
+    local i, j = unpack( trap_cell_index )
+    drawCell(i, j)
+  end
 end
 
 function actionInit()
@@ -211,16 +231,9 @@ end
 
 function actionFlag(i,j)
   local cell = grid[i][j]
-
   if not(cell.revealed) then
-    cell.flagged = not(cell.flagged)
-
-    local adjust = cell.flagged and 1 or -1
-    counters.flagged = counters.flagged + adjust
-
-    flowUpdateTimer()
+    flowToggleFlag(i,j)
     drawCell(i,j)
-    redrawStatus()
   end
 end
 
@@ -229,21 +242,15 @@ function actionReveal(i,j)
   if game_not_started then
     flowStart(i,j)
   end
-
   local cell = grid[i][j]
   local can_be_revealed = not( cell.revealed or cell.flagged )
   if can_be_revealed then
-    flowReveal(i,j)
+    local game_finished = flowReveal(i,j)
     drawCell(i,j)
-    
-    local game_finished = (state.status == 'finished')
     if game_finished then
-      redrawField()
+      drawExposedCells()
     end
-    
-    redrawStatus()
   end
-  flowUpdateTimer()
 end
 
 function isPointInGameField(x,y)
@@ -274,10 +281,11 @@ end
 
 function love.singleclick(x,y)
   if state.status=='started' then
-    flowUpdateTimer()
     if isPointInGameField(x,y) then
       local i, j = detectCellPosition(x,y)
       actionFlag(i,j)
+      flowUpdateTimer()
+      redrawStatus()
     end
   end
 end
@@ -286,10 +294,11 @@ function love.doubleclick(x,y)
   if state.status=='finished' then
     actionInit()
   else
-    flowUpdateTimer()
     if isPointInGameField(x,y) then
       local i, j = detectCellPosition(x,y)
       actionReveal(i,j)
+      flowUpdateTimer()
+      redrawStatus()
     end
   end
 end
