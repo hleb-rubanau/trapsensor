@@ -37,10 +37,13 @@ fonts = {
 cell_fh = cell_font_size
 status_fh = font.getHeight(fonts.status)
 
+-- calculate location of status panel
 padding = status_fh
 lower_edge = screen_h * (1 - screen_vpad)
 hint_start = (lower_edge - padding) - status_fh
 status_start = (hint_start - padding) - status_fh
+status_y = status_start - padding
+status_h = lower_edge - status_y
 
 field_size = cols * cell_size
 field_x = (screen_w - field_size) / 2
@@ -157,8 +160,7 @@ function flowTrapsPlacement(i, j)
   local m = math.min(n_traps, n)
   for ipos, pos in ipairs(positions) do
     local p = (m / n)
-    local selected = math.random() < p
-    if selected then
+    if math.random() < p then
       flowPlaceTrap(unpack(pos))
       m = m - 1
     end
@@ -249,10 +251,9 @@ function actionFlag(i, j)
   end
 end
 
--- TBD: refactor below 14 lines! (now 15)
+-- DONE: shortened
 function actionReveal(i, j)
-  local game_not_started = (state.status == "ready")
-  if game_not_started then
+  if (state.status == "ready") then
     flowStart(i, j)
   end
   local cell = grid[i][j]
@@ -341,16 +342,9 @@ function getHintsLine()
   return result .. "! (double-click to restart)"
 end
 
--- TBD: refactor below 14 lines! (now huge)
-function redrawStatus()
-  local status = getStatusLine()
-  local hint = getHintsLine()
-  
+function drawStatusPanel(status, hint)
   gfx.setColor(colors.background)
-  local status_y = status_start - padding
-  local status_h = lower_edge - status_y
   gfx.rectangle('fill', 0, status_y, screen_w, status_h)
-  
   gfx.setFont(fonts.status)
   if status then
     gfx.setColor(colors.status)
@@ -362,8 +356,15 @@ function redrawStatus()
   end
 end
 
+-- DONE: shortened
+function redrawStatus()
+  local status = getStatusLine()
+  local hint = getHintsLine()
+  drawStatusPanel(status, hint)
+end
+
 -- drawing cells
-function getCellRectangle(i, j)
+function getCellCoordinates(i, j)
   local cell_x_rel = (i - 1) * cell_size
   local cell_y_rel = (j - 1) * cell_size
   local cell_x = field_x + cell_x_rel
@@ -439,7 +440,7 @@ end
 
 function drawCell(i, j)
   local cell = grid[i][j]
-  local coords = getCellRectangle(i, j)
+  local coords = getCellCoordinates(i, j)
   local bgColor = getCellBackgroundColor(cell)
   local fgColor = getCellForegroundColor(cell)
   local content = getCellDisplayContent(cell)
