@@ -8,20 +8,24 @@ status_font_size = 24
 gfx = love.graphics
 
 colors = { }
-colors.background = Color[Color.black],
-colors.status = Color[Color.green],
-colors.hint = Color[Color.yellow],
-colors.cell_border = Color[Color.white],
-colors.cell_bg_not_revealed = { 0.5, 0.5, 0.5 },
-colors.cell_bg_revealed = Color[Color.green],
-colors.cell_bg_flagged = Color[Color.yellow],
-colors.cell_bg_blown = Color[Color.red],
-colors.cell_fg_trap = Color[Color.black],
-colors.cell_fg_flagged = Color[Color.red],
-colors.cell_fg_default = Color[Color.blue],
-colors.cell_fg_revealed_1 = Color[Color.white],
-colors.cell_fg_revealed_2 = Color[Color.black],
-colors.cell_fg_revealed_3 = Color[Color.magenta],
+colors.background = Color[Color.black]
+colors.status = Color[Color.green]
+colors.hint = Color[Color.yellow]
+colors.cell_border = Color[Color.white]
+colors.cell_bg_not_revealed = {
+  0.5,
+  0.5,
+  0.5
+}
+colors.cell_bg_revealed = Color[Color.green]
+colors.cell_bg_flagged = Color[Color.yellow]
+colors.cell_bg_blown = Color[Color.red]
+colors.cell_fg_trap = Color[Color.black]
+colors.cell_fg_flagged = Color[Color.red]
+colors.cell_fg_default = Color[Color.blue]
+colors.cell_fg_revealed_1 = Color[Color.white]
+colors.cell_fg_revealed_2 = Color[Color.black]
+colors.cell_fg_revealed_3 = Color[Color.magenta]
 colors.cell_fg_revealed_4 = Color[Color.red]
 
 screen_w, screen_h = gfx.getDimensions()
