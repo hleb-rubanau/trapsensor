@@ -92,66 +92,83 @@ function flowInitState()
   flowInitGrid()
 end
 
--- TBD: refactor below 14 lines!
-function getNeighbourPositions(i, j)
+function index2d(i_min, i_max, j_min, j_max)
   local result = { }
+  for n = i_min, i_max do
+    for m = j_min, j_max do
+      table.insert(result, {
+        n,
+        m
+      })
+    end
+  end
+  return result
+end
+
+function filter(tbl, predicate)
+  local result = {}
+  for i, v in ipairs(tbl) do
+    if predicate(v) then
+      table.insert(result, v)
+    end
+  end
+  return result
+end
+
+-- DONE: refactor below 14 lines!
+function getNeighbourPositions(i, j)
   local i_min = math.max(i - 1, 1)
   local i_max = math.min(i + 1, cols)
   local j_min = math.max(j - 1, 1)
   local j_max = math.min(j + 1, rows)
-  for n = i_min, i_max do
-    for m = j_min, j_max do
-      local is_original = (n == i) and (m == j)
-      if not is_original then
-        table.insert(result, {
-          n,
-          m
-        })
-      end
-    end
+  local neighbour_points = index2d(i_min, i_max, j_min, j_max)
+  local except_origin = function(coords)
+    local n, m = unpack(coords)
+    local is_origin = (n == i) and (m==j)
+    return not(is_origin)
   end
-  return result
+  return filter(neighbour_points, except_origin)
 end
 
--- TBD: refactor below 14 lines!
+-- DONE: refactor below 14 lines!
 function getNonNeighbourPositions(i, j)
   local result = { }
-  for n = 1, cols do
-    local i_near = math.abs(i - n) <= 1
-    for m = 1, rows do
-      local j_near = math.abs(j - m) <= 1
-      local proximity = i_near and j_near
-      if not proximity then
-        table.insert(result, {
-          n,
-          m
-        })
-      end
-    end
+  local all_points = index2d(1, cols, 1, rows)
+  local not_near = function(coords)
+    local n, m = unpack(coords)
+    local i_near = math.abs(i-n) <= 1
+    local j_near = math.abs(j-m) <= 1
+    local is_near = i_near and j_near
+    return not(is_near)
   end
-  return result
+  return filter(all_points, not_near)
 end
 
--- TBD: refactor below 14 lines!
-function flowPlaceTrap(i, j)
-  local cell = grid[i][j]
-  cell.trap = true
-  table.insert(traps, {
-    i,
-    j
-  })
-  -- for later reference
-  counters.traps = counters.traps + 1
+function flowUpdateNeighbourCounters(i, j)
   local neighbours = getNeighbourPositions(i, j)
   for idx, position in ipairs(neighbours) do
     local pos_i, pos_j = unpack(position)
     local neighbour = grid[pos_i][pos_j]
     neighbour.n_traps_nearby = neighbour.n_traps_nearby + 1
-  
-      end
+  end
 end
 
--- TBD: refactor below 14 lines! (now 15)
+-- DONE: refactor below 14 lines!
+function flowPlaceTrap(i, j)
+  local cell = grid[i][j]
+  cell.trap = true
+
+  -- for later reference
+  table.insert(traps, {
+    i,
+    j
+  })
+
+  counters.traps = counters.traps + 1
+  flowUpdateNeighbourCounters(i, j)
+end
+
+-- DONE: refactor below 14 lines! 
 -- [i,j] is the firt click index, guaranteed to be safe zone
 function flowTrapsPlacement(i, j)
   math.randomseed(os.time())
