@@ -42,6 +42,7 @@ cell_fh = cell_font_size
 status_fh = font.getHeight(fonts.status)
 
 -- calculate location of status panel
+
 padding = status_fh
 lower_edge = screen_h * (1 - screen_vpad)
 hint_start = (lower_edge - padding) - status_fh
@@ -110,7 +111,7 @@ function index2d(i_min, i_max, j_min, j_max)
 end
 
 function filter(tbl, predicate)
-  local result = {}
+  local result = { }
   for i, v in ipairs(tbl) do
     if predicate(v) then
       table.insert(result, v)
@@ -128,8 +129,8 @@ function getNeighbourPositions(i, j)
   local neighbour_points = index2d(i_min, i_max, j_min, j_max)
   local except_origin = function(coords)
     local n, m = unpack(coords)
-    local is_origin = (n == i) and (m==j)
-    return not(is_origin)
+    local is_origin = (n == i) and (m == j)
+    return not (is_origin)
   end
   return filter(neighbour_points, except_origin)
 end
@@ -140,10 +141,10 @@ function getNonNeighbourPositions(i, j)
   local all_points = index2d(1, cols, 1, rows)
   local not_near = function(coords)
     local n, m = unpack(coords)
-    local i_near = math.abs(i-n) <= 1
-    local j_near = math.abs(j-m) <= 1
+    local i_near = math.abs(i - n) <= 1
+    local j_near = math.abs(j - m) <= 1
     local is_near = i_near and j_near
-    return not(is_near)
+    return not (is_near)
   end
   return filter(all_points, not_near)
 end
@@ -154,20 +155,19 @@ function flowUpdateNeighbourCounters(i, j)
     local pos_i, pos_j = unpack(position)
     local neighbour = grid[pos_i][pos_j]
     neighbour.n_traps_nearby = neighbour.n_traps_nearby + 1
-  end
+  
+      end
 end
 
 -- DONE: refactor below 14 lines!
 function flowPlaceTrap(i, j)
   local cell = grid[i][j]
   cell.trap = true
-
   -- for later reference
   table.insert(traps, {
     i,
     j
   })
-
   counters.traps = counters.traps + 1
   flowUpdateNeighbourCounters(i, j)
 end
@@ -365,17 +365,19 @@ end
 
 function drawStatusPanel(status, hint)
   gfx.setColor(colors.background)
-  gfx.rectangle('fill', 0, status_y, screen_w, status_h)
+  gfx.rectangle("fill", 0, status_y, screen_w, status_h)
   gfx.setFont(fonts.status)
   if status then
     gfx.setColor(colors.status)
-    gfx.printf( status, 0, status_start, screen_w, 'center')
-  end
+    gfx.printf(status, 0, status_start, screen_w, "center")
+  
+      end
   if hint then
     gfx.setColor(colors.hint)
-    gfx.printf( hint, 0, hint_start, screen_w, 'center')
+    gfx.printf(hint, 0, hint_start, screen_w, "center")
   end
-end
+
+    end
 
 -- DONE: shortened
 function redrawStatus()
@@ -408,7 +410,8 @@ function renderCell(coords, bgcolor, fgcolor, txt)
     local text_y = cell_y + cell_size * 0.5 - cell_fh * 0.5
     gfx.printf(txt, cell_x, text_y, cell_size, "center")
   end
-end
+
+    end
 
 function getCellBackgroundColor(cell)
   if cell.flagged then
@@ -449,12 +452,12 @@ function getCellDisplayContent(cell)
   if cell.blown then
     return "X"
   elseif is_exposed_trap then
-    return '*'
+    return "*"
   elseif cell.flagged then
-    return '?'
+    return "?"
   elseif cell.revealed then
-    if cell.n_traps_nearby > 0 then
-      return ''..cell.n_traps_nearby
+    if 0 < cell.n_traps_nearby then
+      return "" .. cell.n_traps_nearby
     end
   end
 end
