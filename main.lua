@@ -468,16 +468,10 @@ function actionUnlock(i, j)
   end
 end
 
-function actionUser(name, x, y)
+function actionUser(action, x, y)
   local i, j = detectCellPosition(x, y)
-  if not (i and j) then
-    return 
-  end
-  if name == "flag" then
-    actionFlag(i, j)
-  end
-  if name == "unlock" then
-    actionUnlock(i, j)
+  if i and j then
+    action(i, j)
   end
 end
 
@@ -485,7 +479,7 @@ end
 
 function love.singleclick(x, y)
   if state.status == "started" then
-    actionUser("flag", x, y)
+    actionUser(actionFlag, x, y)
   end
 end
 
@@ -496,7 +490,7 @@ function love.doubleclick(x, y)
   if game_over then
     actionInit()
   else
-    actionUser("unlock", x, y)
+    actionUser(actionUnlock, x, y)
   end
 end
 
