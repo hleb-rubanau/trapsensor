@@ -202,6 +202,10 @@ function cells_to_expose(i, j)
   return cell_filter(all_mined_cells(), except_cell(i, j))
 end
 
+function unlockable_neighbors(i, j)
+  return cell_filter(neighbors(i,j), cell_is_unlockable)
+end
+
 --- *** conversions between screen and field/cells ***
 
 function isPointInGameField(x, y)
@@ -429,15 +433,24 @@ function flowBlow(i, j)
   end
 end
 
+function flowSafeUnlock(i,j)
+  local n_neighbors = count_mined_neighbors(i, j)
+  drawCellUnlocked(i, j, n_neighbors)
+  grid[i][j].unlocked = true
+  counters.unlocked = counters.unlocked + 1
+  if n_neighbors == 0 then
+    for row, col in unlockable_neighbors(i,j) do
+      flowSafeUnlock(row,col)
+    end
+  end
+end
+
 function flowUnlock(i, j)
   if cell_is_mined(i, j) then
     flowBlow(i, j)
     return "lost"
   end
-  local n_neighbors = count_mined_neighbors(i, j)
-  drawCellUnlocked(i, j, n_neighbors)
-  grid[i][j].unlocked = true
-  counters.unlocked = counters.unlocked + 1
+  flowSafeUnlock(i,j)
   if counters.unlockable == counters.unlocked then
     return "won"
   end
