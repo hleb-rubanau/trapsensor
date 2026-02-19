@@ -135,7 +135,7 @@ end
 function on_board(i, j)
   local cols = config.cols
   local rows = config.rows
-  return between(1, i, rows) and between(1, j, cols)
+  return between(1, i, cols) and between(1, j, rows)
 end
 
 function neighborhood_size(i, j)
@@ -146,9 +146,9 @@ function neighborhood_size(i, j)
   return size_cols * size_rows
 end
 
-function not_neighbor(row, col)
+function not_neighbor(col, row)
   return function(i, j)
-    local proximity = (i - row) ^ 2 + (j - col) ^ 2
+    local proximity = (i - col) ^ 2 + (j - row) ^ 2
     return (2 < proximity)
   end
 end
@@ -175,27 +175,27 @@ function all_cells()
         return nil
       end
     end
-    return row, col
+    return col, row
   end
 end
 
 function cell_filter(cells, filter)
   local iterator
   function iterator()
-    local row, col = cells()
+    local col, row = cells()
     if (nil == row) then
       return nil
     end
-    if filter(row, col) then
-      return row, col
+    if filter(col, row) then
+      return col, row
     end
     return iterator()
   end
   return iterator
 end
 
-function mineable_positions(row, col)
-  return cell_filter(all_cells(), not_neighbor(row, col))
+function mineable_positions(col, row)
+  return cell_filter(all_cells(), not_neighbor(col, row))
 end
 
 function neighbors(i, j)
@@ -225,9 +225,9 @@ function except_cell(i, j)
   end
 end
 
-function count_mined_neighbors(row, col)
+function count_mined_neighbors(col, row)
   local result = 0
-  for i, j in neighbors(row, col) do
+  for i, j in neighbors(col, row) do
     if cell_is_mined(i, j) then
       result = result + 1
     end
@@ -458,10 +458,10 @@ function flowMinesPlacement(i, j)
   math.randomseed(os.time())
   local mineable_cells = config.cells - neighborhood_size(i, j)
   local mines_to_place = config.mines
-  for row, col in mineable_positions(i, j) do
+  for col, row in mineable_positions(i, j) do
     local p = mines_to_place / mineable_cells
     if math.random() < p then
-      flowPlaceMine(row, col)
+      flowPlaceMine(col, row)
       mines_to_place = mines_to_place - 1
     end
     mineable_cells = mineable_cells - 1
@@ -494,9 +494,9 @@ end
 
 function flowBlow(i, j)
   drawCellBlown(i, j)
-  for row, col in cells_to_expose(i, j) do
-    local cell = grid[row][col]
-    drawCellExposed(row, col, cell.flagged)
+  for col, row in cells_to_expose(i, j) do
+    local cell = grid[col][row]
+    drawCellExposed(col, row, cell.flagged)
   end
 end
 
@@ -506,8 +506,8 @@ function flowSafeUnlock(i, j)
   grid[i][j].unlocked = true
   counters.unlocked = counters.unlocked + 1
   if n_neighbors == 0 then
-    for row, col in unlockable_neighbors(i, j) do
-      flowSafeUnlock(row, col)
+    for col, row in unlockable_neighbors(i, j) do
+      flowSafeUnlock(col, row)
     end
   end
 end
