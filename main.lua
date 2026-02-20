@@ -6,7 +6,6 @@ MIDDLE_COLS = 16
 MIDDLE_ROWS = 16
 MINES_PERCENT = 15
 
--- N_MINES = 12
 CELL_SIZE = 32
 CELL_FONT_SIZE = 28
 STATUS_FONT_SIZE = 24
@@ -33,7 +32,6 @@ COLORS.cell_fg_unlocked_1 = Color[Color.white]
 COLORS.cell_fg_unlocked_2 = Color[Color.black]
 COLORS.cell_fg_unlocked_3 = Color[Color.magenta]
 COLORS.cell_fg_unlocked_4 = Color[Color.red]
-
 
 HINTS = {
   ready = "Double-click to start, click to switch mode",
@@ -70,7 +68,7 @@ status_h = lower_edge - status_y
 
 -- geometry and coordinates of gamefield
 
-max_field_width = screen_w 
+max_field_width = screen_w
 max_field_height = status_y
 max_cols = math.floor( max_field_width / CELL_SIZE )
 max_rows = math.floor( max_field_height / CELL_SIZE )
@@ -107,15 +105,15 @@ function game_mode( cols, rows, mines )
   local n_mines = max_mines
   if mines then
     n_mines = math.min( mines, max_mines )
-  end 
+  end
   return n_cols, n_rows, n_mines
 end
 
 function add_game_mode( cols, rows, mines )
-  local n_cols, n_rows, n_mines = game_mode(cols, rows, mines) 
+  local n_cols, n_rows, n_mines = game_mode(cols, rows, mines)
   table.insert(modes, {
-    n_cols, 
-    n_rows, 
+    n_cols,
+    n_rows,
     n_mines
   })
 end
@@ -535,7 +533,7 @@ function actionNextMode()
   if mode_idx == #modes then
     mode_idx = 1
   else
-    mode_idx = mode_idx + 1 
+    mode_idx = mode_idx + 1
   end
   flowInitConfig( modes[mode_idx] )
   actionInit()
