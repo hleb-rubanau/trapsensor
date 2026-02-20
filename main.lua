@@ -70,8 +70,8 @@ status_h = lower_edge - status_y
 
 max_field_width = screen_w
 max_field_height = status_y
-max_cols = math.floor( max_field_width / CELL_SIZE )
-max_rows = math.floor( max_field_height / CELL_SIZE )
+max_cols = math.floor(max_field_width / CELL_SIZE)
+max_rows = math.floor(max_field_height / CELL_SIZE)
 
 -- helper matrix: neighbour offsets
 
@@ -97,20 +97,24 @@ grid = { }
 counters = { }
 mines = { }
 
-function game_mode( cols, rows, mines )
-  local n_cols = math.min( cols, max_cols )
-  local n_rows = math.min( rows, max_rows )
-  local n_cells = n_cols*n_rows
-  local max_mines = math.floor( n_cells * MINES_PERCENT / 100 )
+function game_mode(cols, rows, mines)
+  local n_cols = math.min(cols, max_cols)
+  local n_rows = math.min(rows, max_rows)
+  local n_cells = n_cols * n_rows
+  local max_mines = math.floor(n_cells * MINES_PERCENT / 100)
   local n_mines = max_mines
   if mines then
-    n_mines = math.min( mines, max_mines )
+    n_mines = math.min(mines, max_mines)
   end
   return n_cols, n_rows, n_mines
 end
 
-function add_game_mode( cols, rows, mines )
-  local n_cols, n_rows, n_mines = game_mode(cols, rows, mines)
+function add_game_mode(cols, rows, mines)
+  local n_cols, n_rows, n_mines = game_mode(
+    cols,
+    rows,
+    mines
+  )
   table.insert(modes, {
     n_cols,
     n_rows,
@@ -119,9 +123,9 @@ function add_game_mode( cols, rows, mines )
 end
 
 function initModes()
-  add_game_mode( DEFAULT_COLS, DEFAULT_ROWS, DEFAULT_MINES )
-  add_game_mode( MIDDLE_COLS, MIDDLE_ROWS )
-  add_game_mode( max_cols, max_rows )
+  add_game_mode(DEFAULT_COLS, DEFAULT_ROWS, DEFAULT_MINES)
+  add_game_mode(MIDDLE_COLS, MIDDLE_ROWS)
+  add_game_mode(max_cols, max_rows)
 end
 
 --- *** helper functions: cells manipulation  ***
@@ -160,7 +164,8 @@ function all_neighbors(i, j)
     end
     return col_offset[index] + i, row_offset[index] + j
   end
-end
+
+    end
 
 function all_cells()
   local row, col = 1, 0
@@ -303,13 +308,20 @@ function drawStatusPanel(hint, statistics)
   gfx.setFont(fonts.status)
   if statistics then
     gfx.setColor(COLORS.status)
-    gfx.printf(statistics, 0, status_start, screen_w, "center")
+    gfx.printf(
+      statistics,
+      0,
+      status_start,
+      screen_w,
+      "center"
+    )
   end
   if hint then
     gfx.setColor(COLORS.hint)
     gfx.printf(hint, 0, hint_start, screen_w, "center")
   end
-end
+
+    end
 
 function redrawStatus(status)
   local statusLineBuilder = getModeLine
@@ -412,7 +424,6 @@ function flowInitConfig(mode)
   config.field_y_max = config.field_y + config.field_h
 end
 
-
 function flowInitGrid()
   for i = 1, max_cols do
     grid[i] = { }
@@ -454,7 +465,10 @@ end
 
 function flowMinesPlacement(i, j)
   math.randomseed(os.time())
-  local mineable_cells = config.cells - neighborhood_size(i, j)
+  local mineable_cells = config.cells - neighborhood_size(
+    i,
+    j
+  )
   local mines_to_place = config.mines
   for col, row in mineable_positions(i, j) do
     local p = mines_to_place / mineable_cells
@@ -535,7 +549,7 @@ function actionNextMode()
   else
     mode_idx = mode_idx + 1
   end
-  flowInitConfig( modes[mode_idx] )
+  flowInitConfig(modes[mode_idx])
   actionInit()
 end
 
@@ -569,7 +583,8 @@ end
 function love.singleclick(x, y)
   if state.status == "started" then
     actionUser(actionFlag, x, y)
-  elseif state.status == "ready" then
+  elseif state.status == 
+      "ready" then
     actionNextMode()
   end
 end
@@ -586,6 +601,6 @@ function love.doubleclick(x, y)
 end
 
 initModes()
-flowInitConfig( modes[1] )
+flowInitConfig(modes[1])
 flowInitGrid()
 actionInit()
