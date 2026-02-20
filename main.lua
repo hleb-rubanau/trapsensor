@@ -54,6 +54,8 @@ COLORS.cell_bg_blown = {
   0.1
 }
 COLORS.cell_fg_mine = Color[Color.black]
+COLORS.cell_mine_blink = Color[Color.white]
+
 COLORS.cell_fg_flagged = {
   0.25,
   0.15,
@@ -382,6 +384,47 @@ function renderCellTile(x, y, bgcolor)
   gfx.rectangle("line", x, y, CELL_SIZE, CELL_SIZE)
 end
 
+function mine_canvas_range(center, padding)
+  local start_point = (center - CELL_SIZE / 2) + padding
+  local end_point = center + CELL_SIZE / 2 - padding
+  return start_point, end_point
+end
+
+function drawMineSpikes(cx, cy, p)
+  local outer_left, outer_right = mine_canvas_range(cx, p)
+  local outer_top, outer_bottom = mine_canvas_range(cy, p)
+  local inner_left, inner_right = mine_canvas_range(cx, 2 * p)
+  local inner_top, inner_bottom = mine_canvas_range(cy, 2 * p)
+  gfx.line(cx, outer_top, cx, outer_bottom)
+  gfx.line(outer_left, cy, outer_right, cy)
+  gfx.line(inner_left, inner_top, inner_right, inner_bottom)
+  gfx.line(inner_left, inner_bottom, inner_right, inner_top)
+end
+
+function drawMine(x, y)
+  local cx = x + 0.5 * CELL_SIZE
+  local cy = y + 0.5 * CELL_SIZE
+  local r = 0.3 * CELL_SIZE
+  local padding = 0.1 * CELL_SIZE
+  drawMineSpikes(cx, cy, padding)
+  gfx.setColor(COLORS.cell_fg_mine)
+  gfx.circle("fill", cx, cy, r)
+  gfx.setColor(COLORS.cell_mine_blink)
+  gfx.circle("fill", cx - r / 3, cy - r / 3, r / 4)
+end
+
+function drawFlag(x, y)
+  local cx, cy = x+CELL_SIZE/2, y+CELL_SIZE/2
+  local left, right = mine_canvas_range(cx, 0.3*CELL_SIZE)
+  local top, bottom = mine_canvas_range(cy, 0.25*CELL_SIZE)
+  local flag_h = 0.3 * CELL_SIZE
+  local bisect = top + flag_h / 2
+  local low = top + flag_h
+  gfx.setColor(COLORS.cell_fg_flagged)
+  gfx.line(left, top, left, bottom)
+  gfx.polygon("fill", left, top, right, bisect, left, low)
+end
+
 function renderCellText(x, y, fgcolor, txt)
   gfx.setColor(fgcolor)
   local text_y = y + CELL_SIZE * 0.5 - cell_fh * 0.5
@@ -408,7 +451,7 @@ end
 function drawCellFlagged(i, j)
   local x, y = getCellCoordinates(i, j)
   renderCellTile(x, y, COLORS.cell_bg_flagged)
-  renderCellText(x, y, COLORS.cell_fg_flagged, "?")
+  drawFlag(x, y)
 end
 
 function drawCellUnlocked(i, j, n)
@@ -423,7 +466,7 @@ end
 function drawCellBlown(i, j)
   local x, y = getCellCoordinates(i, j)
   renderCellTile(x, y, COLORS.cell_bg_blown)
-  renderCellText(x, y, COLORS.cell_fg_mine, "X")
+  drawMine(x, y)
 end
 
 function drawCellExposed(i, j, was_flagged)
@@ -433,7 +476,7 @@ function drawCellExposed(i, j, was_flagged)
     bgcolor = COLORS.cell_bg_flagged
   end
   renderCellTile(x, y, bgcolor)
-  renderCellText(x, y, COLORS.cell_fg_mine, "*")
+  drawMine(x, y)
 end
 
 function redraw()
