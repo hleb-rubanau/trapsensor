@@ -110,11 +110,7 @@ function game_mode(cols, rows, mines)
 end
 
 function add_game_mode(cols, rows, mines)
-  local n_cols, n_rows, n_mines = game_mode(
-    cols,
-    rows,
-    mines
-  )
+  local n_cols, n_rows, n_mines = game_mode(cols, rows, mines)
   table.insert(modes, {
     n_cols,
     n_rows,
@@ -164,8 +160,7 @@ function all_neighbors(i, j)
     end
     return col_offset[index] + i, row_offset[index] + j
   end
-
-    end
+end
 
 function all_cells()
   local row, col = 1, 0
@@ -308,20 +303,13 @@ function drawStatusPanel(hint, statistics)
   gfx.setFont(fonts.status)
   if statistics then
     gfx.setColor(COLORS.status)
-    gfx.printf(
-      statistics,
-      0,
-      status_start,
-      screen_w,
-      "center"
-    )
+    gfx.printf(statistics, 0, status_start, screen_w, "center")
   end
   if hint then
     gfx.setColor(COLORS.hint)
     gfx.printf(hint, 0, hint_start, screen_w, "center")
   end
-
-    end
+end
 
 function redrawStatus(status)
   local statusLineBuilder = getModeLine
@@ -465,10 +453,7 @@ end
 
 function flowMinesPlacement(i, j)
   math.randomseed(os.time())
-  local mineable_cells = config.cells - neighborhood_size(
-    i,
-    j
-  )
+  local mineable_cells = config.cells - neighborhood_size(i, j)
   local mines_to_place = config.mines
   for col, row in mineable_positions(i, j) do
     local p = mines_to_place / mineable_cells
