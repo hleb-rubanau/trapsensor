@@ -663,8 +663,7 @@ end
 function love.singleclick(x, y)
   if state.status == "started" then
     actionUser(actionFlag, x, y)
-  elseif state.status == 
-      "ready" then
+  elseif state.status == "ready" then
     actionNextMode()
   end
 end
