@@ -5,19 +5,43 @@ require("functions")
 
 --- *** event handlers and initialization ***
 
-function love.singleclick(x, y)
-  if game_ready() then
+function readyInput()
+  function singleclick(x, y)
     actionNextMode()
-  elseif game_started() then
+    sfx.jump()
+  end
+  function doubleclick(x, y)
+    actionUser(flowStart, x, y)
+    actionUser(actionUnlock, x, y)
+  end
+end
+
+function startedInput()
+  function singleclick(x, y)
     actionUser(actionFlag, x, y)
+  end
+  function doubleclick(x, y)
+    actionUser(actionUnlock, x, y)
+  end
+end
+
+function gameoverInput()
+  singleclick = nil
+  function doubleclick(x, y)
+    actionInit()
+    sfx.beep()
+  end
+end
+
+function love.singleclick(x, y)
+  if singleclick then
+    singleclick(x, y)
   end
 end
 
 function love.doubleclick(x, y)
-  if game_over() then
-    actionInit()
-  else
-    actionUser(actionUnlock, x, y)
+  if doubleclick then
+    doubleclick(x, y)
   end
 end
 
