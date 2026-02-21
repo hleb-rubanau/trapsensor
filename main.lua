@@ -153,20 +153,6 @@ grid = { }
 counters = { }
 mines = { }
 
-function game_over()
-  local game_won = (state.status == "won")
-  local game_lost = (state.status == "lost")
-  return (game_won or game_lost)
-end
-
-function game_started()
-  return state.status == "started"
-end
-
-function game_ready()
-  return state.status == "ready"
-end
-
 function game_mode(cols, rows, mines)
   local n_cols = math.min(cols, max_cols)
   local n_rows = math.min(rows, max_rows)
@@ -383,7 +369,7 @@ end
 
 function redrawStatus(status)
   local statusLineBuilder = getModeLine
-  if not (game_ready()) then
+  if status ~= "ready" then
     counters.seconds = os.time() - state.started
     statusLineBuilder = getStatsLine
   end
@@ -544,7 +530,7 @@ function flowResetCells()
 end
 
 function flowInitState()
-  state.status = "ready"
+  readyInput()
   state.time_started = nil
   counters.unlocked = 0
   counters.seconds = 0
@@ -578,7 +564,7 @@ end
 
 function flowStart(i, j)
   flowMinesPlacement(i, j)
-  state.status = "started"
+  startInput()
   state.started = os.time()
   counters.clicks = 0
   counters.seconds = 0
@@ -597,7 +583,7 @@ function flowToggleFlag(i, j)
     drawCellLocked(i, j)
     counters.flagged = counters.flagged - 1
   end
-  redrawStatus(state.status)
+  redrawStatus("started")
 end
 
 function flowBlow(i, j)
@@ -623,13 +609,17 @@ end
 function flowUnlock(i, j)
   if cell_is_mined(i, j) then
     flowBlow(i, j)
-    return "lost"
+    redrawStatus("lost")
+    gameoverInput()
+    return 
   end
   flowSafeUnlock(i, j)
   if counters.unlockable == counters.unlocked then
-    return "won"
+    redrawStatus("won")
+    gameoverInput()
+    return 
   end
-  return "started"
+  redrawStatus("started")
 end
 
 --- *** actions: interactive actions entry points ***
@@ -656,13 +646,9 @@ function actionFlag(i, j)
 end
 
 function actionUnlock(i, j)
-  if game_ready() then
-    flowStart(i, j)
-  end
   if cell_is_unlockable(i, j) then
     counters.clicks = counters.clicks + 1
-    state.status = flowUnlock(i, j)
-    redrawStatus(state.status)
+    flowUnlock(i, j)
   end
 end
 
@@ -676,19 +662,32 @@ end
 
 --- *** event handlers and initialization ***
 
-function love.singleclick(x, y)
-  if game_ready() then
+function readyInput()
+  function love.singleclick(x, y)
     actionNextMode()
-  elseif game_started() then
-    actionUser(actionFlag, x, y)
+  end
+  function love.doubleclick(x, y)
+    actionUser(flowStart, x, y)
+    actionUser(actionUnlock, x, y)
+    startedInput()
   end
 end
 
-function love.doubleclick(x, y)
-  if game_over() then
-    actionInit()
-  else
+function startedInput()
+  function love.singleclick(x, y)
+    actionUser(actionFlag, x, y)
+  end
+  function love.doubleclick(x, y)
     actionUser(actionUnlock, x, y)
+  end
+end
+
+function gameoverInput()
+  function love.signleclick(x, y)
+    
+  end
+  function love.doubleclick(x, y)
+    actionInit()
   end
 end
 
