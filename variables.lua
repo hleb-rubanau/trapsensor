@@ -1,6 +1,3 @@
-require("config")
-require("constants")
-
 --- *** runtime variables *** 
 
 mode_idx = 1
