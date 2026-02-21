@@ -61,30 +61,32 @@ COLORS.cell_fg_flagged = {
   0.15,
   0.05
 }
-COLORS.cell_fg_default = {
-  0.5,
-  0.1,
-  0.1
-}
-COLORS.cell_fg_unlocked_1 = {
+COLORS.cell_fg_default = Color[Color.black]
+COLORS.cell_fg_unlocked = { }
+COLORS.cell_fg_unlocked[1] = {
   0.1,
   0.1,
   0.8
 }
-COLORS.cell_fg_unlocked_2 = {
+COLORS.cell_fg_unlocked[2] = {
   0.1,
   0.55,
   0.1
 }
-COLORS.cell_fg_unlocked_3 = {
+COLORS.cell_fg_unlocked[3] = {
   0.8,
   0.1,
   0.1
 }
-COLORS.cell_fg_unlocked_4 = {
+COLORS.cell_fg_unlocked[4] = {
   0.1,
   0.1,
   0.45
+}
+COLORS.cell_fg_unlocked[5] = {
+  0.5,
+  0.1,
+  0.1
 }
 
 HINTS = {
@@ -448,9 +450,9 @@ end
 function getMinesAroundColor(n_mines_nearby)
   for v = 8, 1, -1 do
     if v <= n_mines_nearby then
-      local color_name = "cell_fg_unlocked_" .. v
-      if COLORS[color_name] then
-        return COLORS[color_name]
+      local maybe_color = COLORS.cell_fg_unlocked[v]
+      if maybe_color then
+        return maybe_color
       end
     end
   end
