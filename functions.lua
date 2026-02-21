@@ -455,20 +455,29 @@ function flowSafeUnlock(i, j)
   end
 end
 
+function lose()
+  redrawStatus("lost")
+  gameoverInput()
+  sfx.boom()
+end
+
+function win()
+  redrawStatus("won")
+  gameoverInput()
+  sfx.wow()
+end
+
 function flowUnlock(i, j)
   if cell_is_mined(i, j) then
     flowBlow(i, j)
-    redrawStatus("lost")
-    gameoverInput()
-    return
+    return lose()
   end
   flowSafeUnlock(i, j)
   if counters.unlockable == counters.unlocked then
-    redrawStatus("won")
-    gameoverInput()
-    return
+    return win()
   end
   redrawStatus("started")
+  sfx.ping()
 end
 
 --- *** actions: interactive actions entry points ***
@@ -491,6 +500,7 @@ end
 function actionFlag(i, j)
   if cell_is_flaggable(i, j) then
     flowToggleFlag(i, j)
+    sfx.toggle()
   end
 end
 

@@ -8,6 +8,7 @@ require("functions")
 function readyInput()
   function singleclick(x, y)
     actionNextMode()
+    sfx.jump()
   end
   function doubleclick(x, y)
     actionUser(flowStart, x, y)
@@ -28,6 +29,7 @@ function gameoverInput()
   singleclick = nil
   function doubleclick(x, y)
     actionInit()
+    sfx.beep()
   end
 end
 

@@ -3,6 +3,7 @@ require("config")
 --- *** derived constants definitions ***
 fmt = string.format
 
+sfx = compy.audio
 gfx = love.graphics
 screen_w, screen_h = gfx.getDimensions()
 
