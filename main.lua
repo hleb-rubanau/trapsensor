@@ -33,13 +33,13 @@ function gameoverInput()
   end
 end
 
-function love.singleclick(x, y)
+function compy.singleclick(x, y)
   if singleclick then
     singleclick(x, y)
   end
 end
 
-function love.doubleclick(x, y)
+function compy.doubleclick(x, y)
   if doubleclick then
     doubleclick(x, y)
   end
