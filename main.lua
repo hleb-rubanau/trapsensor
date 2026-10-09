@@ -7,8 +7,7 @@ require("functions")
 
 function readyInput()
   function singleclick(x, y)
-    actionNextMode()
-    sfx.jump()
+    return 
   end
   function doubleclick(x, y)
     actionUser(flowStart, x, y)

@@ -2,33 +2,6 @@ require("config")
 require("constants")
 require("variables")
 
-function game_mode(cols, rows, mines)
-  local n_cols = math.min(cols, max_cols)
-  local n_rows = math.min(rows, max_rows)
-  local n_cells = n_cols * n_rows
-  local max_mines = math.floor(n_cells * MINES_PERCENT / 100)
-  local n_mines = max_mines
-  if mines then
-    n_mines = math.min(mines, max_mines)
-  end
-  return n_cols, n_rows, n_mines
-end
-
-function add_game_mode(cols, rows, mines)
-  local n_cols, n_rows, n_mines = game_mode(cols, rows, mines)
-  table.insert(modes, {
-    n_cols,
-    n_rows,
-    n_mines
-  })
-end
-
-function initModes()
-  add_game_mode(DEFAULT_COLS, DEFAULT_ROWS, DEFAULT_MINES)
-  add_game_mode(MIDDLE_COLS, MIDDLE_ROWS)
-  add_game_mode(max_cols, max_rows)
-end
-
 --- *** helper functions: cells manipulation  ***
 
 function between(low, mid, high)
@@ -487,16 +460,6 @@ function actionInit()
   redraw()
 end
 
-function actionNextMode()
-  if mode_idx == #modes then
-    mode_idx = 1
-  else
-    mode_idx = mode_idx + 1
-  end
-  flowInitConfig(modes[mode_idx])
-  actionInit()
-end
-
 function actionFlag(i, j)
   if cell_is_flaggable(i, j) then
     flowToggleFlag(i, j)
@@ -520,8 +483,11 @@ function actionUser(action_func, x, y)
 end
 
 function initialize()
-  initModes()
-  flowInitConfig(modes[1])
+  flowInitConfig({
+    DEFAULT_COLS,
+    DEFAULT_ROWS,
+    DEFAULT_MINES
+  })
   flowInitGrid()
   actionInit()
 end
