@@ -8,30 +8,21 @@ gfx = love.graphics
 screen_w, screen_h = gfx.getDimensions()
 
 fonts = {
-  status = gfx.newFont(STATUS_FONT_SIZE),
+  label = gfx.newFont(LABEL_FONT_SIZE),
   cell = gfx.newFont(CELL_FONT_SIZE)
 }
 
 -- for cell we use glyph height, not font line height
 
 cell_fh = fonts.cell:getHeight()
-status_fh = fonts.status:getHeight()
+label_fh = fonts.label:getHeight()
 
--- geometry and coordinates of status panel
+-- screen: the terminal on the left, the board on the right,
+-- the prompt and input lines along the bottom
 
-status_padding = status_fh
-lower_edge = screen_h * (1 - SCREEN_VPAD)
-hint_start = (lower_edge - status_padding) - status_fh
-status_start = (hint_start - status_padding) - status_fh
-status_y = status_start - status_padding
-status_h = lower_edge - status_y
-
--- geometry and coordinates of gamefield
-
-max_field_width = screen_w
-max_field_height = status_y
-max_cols = math.floor(max_field_width / CELL_SIZE)
-max_rows = math.floor(max_field_height / CELL_SIZE)
+board_x = screen_w * TERMINAL_SHARE
+board_w = screen_w - board_x
+board_h = screen_h - INPUT_H
 
 -- helper matrix: neighbour offsets
 

@@ -4,9 +4,10 @@ DEFAULT_MINES = 12
 
 CELL_SIZE = 32
 CELL_FONT_SIZE = 26
-STATUS_FONT_SIZE = 24
+LABEL_FONT_SIZE = 24
 
-SCREEN_VPAD = 0.1
+TERMINAL_SHARE = 0.5
+INPUT_H = 66
 
 COLORS = { }
 COLORS.background = {
@@ -14,12 +15,7 @@ COLORS.background = {
   0.15,
   0.18
 }
-COLORS.status = {
-  0.7,
-  0.85,
-  0.7
-}
-COLORS.hint = {
+COLORS.label = {
   0.9,
   0.8,
   0.5
@@ -85,15 +81,8 @@ COLORS.cell_fg_unlocked[5] = {
   0.1
 }
 
-HINTS = {
-  ready = "Type e5! or double-click to start",
-  started = "b4 flags, b4! opens (or click, double-click)",
-  won = "WIN!!! (type r or double-click to restart)",
-  lost = "Loss... (type r or double-click to restart)"
-}
-
 PROMPTS = {
-  ready = "Open any cell (doubleclick or type e.g. 'f9')",
-  started = "Open = 'f9!' or doubleclick; Flag = 'f9' or click",
-  restart = "Type 'r' or 'restart' to play again"
+  ready = "Open a cell: f9! or double-click",
+  started = "Open f9! (double-click), flag f9 (click)",
+  restart = "Type r or restart to play again"
 }

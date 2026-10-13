@@ -10,6 +10,7 @@ function askBeforeStart()
     local i, j, act_open = read_cell_command(text)
     if not (i and j and act_open) then
       compy.ask(PROMPTS.ready)
+      printIgnored(text)
     else
       actionStart(i, j)
     end
@@ -31,6 +32,8 @@ function askForRestart()
     compy.ask(PROMPTS.restart)
     if validate_restart_command(text) then
       actionRestart()
+    else
+      printIgnored(text)
     end
   end
   compy.ask(PROMPTS.restart)

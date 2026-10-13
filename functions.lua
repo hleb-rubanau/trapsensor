@@ -156,16 +156,14 @@ function getCellCoordinates(i, j)
   return x, y
 end
 
---- *** visualization: status panel *** 
+--- *** terminal log ***
 
 function getStatsLine()
   local r = counters.unlocked
   local p = counters.unlockable
   local f = counters.flagged
   local t = counters.mines
-  local s = counters.seconds
-  local template = "Flags: %s/%s | Open: %s/%s | Sec: %s"
-  return fmt(template, f, t, r, p, s)
+  return fmt("Flags %s/%s, Open %s/%s", f, t, r, p)
 end
 
 function getModeLine()
@@ -175,28 +173,18 @@ function getModeLine()
   return fmt("Mode: %s x %s (%s mines)", c, r, m)
 end
 
-function drawStatusPanel(hint, statistics)
-  gfx.setColor(COLORS.background)
-  gfx.rectangle("fill", 0, status_y, screen_w, status_h)
-  gfx.setFont(fonts.status)
-  if statistics then
-    gfx.setColor(COLORS.status)
-    gfx.printf(statistics, 0, status_start, screen_w, "center")
-  end
-  if hint then
-    gfx.setColor(COLORS.hint)
-    gfx.printf(hint, 0, hint_start, screen_w, "center")
-  end
+function getGameTime()
+  local s = os.time() - (state.started or os.time())
+  return fmt("%02d:%02d", math.floor(s / 60), s % 60)
 end
 
-function redrawStatus(status)
-  local statusLineBuilder = getModeLine
-  if status ~= "ready" then
-    counters.seconds = os.time() - state.started
-    statusLineBuilder = getStatsLine
-  end
-  local statusLine = statusLineBuilder()
-  drawStatusPanel(HINTS[status], statusLine)
+function getCellCommand(i, j, open)
+  local bang = open and "!" or ""
+  return columnLabel(i) .. j .. bang
+end
+
+function printEvent(event)
+  print(fmt("[%s] %s", getGameTime(), event))
 end
 
 --- *** visualization: game field *** 
@@ -308,8 +296,8 @@ function columnLabel(i)
 end
 
 function drawColumnLabels(y)
-  gfx.setFont(fonts.status)
-  gfx.setColor(COLORS.hint)
+  gfx.setFont(fonts.label)
+  gfx.setColor(COLORS.label)
   for i = 1, config.cols do
     local x = getCellCoordinates(i, 1)
     gfx.printf(columnLabel(i), x, y, CELL_SIZE, "center")
@@ -317,9 +305,9 @@ function drawColumnLabels(y)
 end
 
 function drawRowLabels(x)
-  local pad = (CELL_SIZE - status_fh) / 2
-  gfx.setFont(fonts.status)
-  gfx.setColor(COLORS.hint)
+  local pad = (CELL_SIZE - label_fh) / 2
+  gfx.setFont(fonts.label)
+  gfx.setColor(COLORS.label)
   for j = 1, config.rows do
     local _, y = getCellCoordinates(1, j)
     gfx.printf("" .. j, x, y + pad, CELL_SIZE, "center")
@@ -327,7 +315,7 @@ function drawRowLabels(x)
 end
 
 function drawLabels()
-  drawColumnLabels(config.field_y - status_fh)
+  drawColumnLabels(config.field_y - label_fh)
   drawColumnLabels(config.field_y_max)
   drawRowLabels(config.field_x - CELL_SIZE)
   drawRowLabels(config.field_x_max)
@@ -335,7 +323,7 @@ end
 
 function redraw()
   gfx.setColor(COLORS.background)
-  gfx.rectangle("fill", 0, 0, screen_w, screen_h)
+  gfx.rectangle("fill", board_x, 0, board_w, screen_h)
   gfx.setFont(fonts.cell)
   for i = 1, config.cols do
     for j = 1, config.rows do
@@ -343,7 +331,7 @@ function redraw()
     end
   end
   drawLabels()
-  redrawStatus("ready")
+  print(getModeLine())
 end
 
 --- *** flows: game rules and logic *** 
@@ -356,16 +344,16 @@ function flowInitConfig(mode)
   config.mines = n_mines
   config.field_w = cols * CELL_SIZE
   config.field_h = rows * CELL_SIZE
-  config.field_x = (max_field_width - config.field_w) / 2
-  config.field_y = (max_field_height - config.field_h) / 2
+  config.field_x = board_x + (board_w - config.field_w) / 2
+  config.field_y = (board_h - config.field_h) / 2
   config.field_x_max = config.field_x + config.field_w
   config.field_y_max = config.field_y + config.field_h
 end
 
 function flowInitGrid()
-  for i = 1, max_cols do
+  for i = 1, config.cols do
     grid[i] = { }
-    for j = 1, max_rows do
+    for j = 1, config.rows do
       grid[i][j] = { }
     end
   end
@@ -384,9 +372,8 @@ end
 
 function flowInitState()
   readyInput()
-  state.time_started = nil
+  state.started = nil
   counters.unlocked = 0
-  counters.seconds = 0
   counters.clicks = 0
   counters.unlockable = 0
   counters.mines = 0
@@ -420,7 +407,6 @@ function flowStart(i, j)
   startedInput()
   state.started = os.time()
   counters.clicks = 0
-  counters.seconds = 0
   counters.unlocked = 0
   counters.flagged = 0
   counters.unlockable = config.cells - counters.mines
@@ -436,7 +422,7 @@ function flowToggleFlag(i, j)
     drawCellLocked(i, j)
     counters.flagged = counters.flagged - 1
   end
-  redrawStatus("started")
+  print(getStatsLine())
 end
 
 function flowBlow(i, j)
@@ -460,13 +446,13 @@ function flowSafeUnlock(i, j)
 end
 
 function lose()
-  redrawStatus("lost")
+  printEvent("LOSS")
   gameoverInput()
   sfx.boom()
 end
 
 function win()
-  redrawStatus("won")
+  printEvent("WIN")
   gameoverInput()
   sfx.wow()
 end
@@ -477,10 +463,10 @@ function flowUnlock(i, j)
     return lose()
   end
   flowSafeUnlock(i, j)
+  print(getStatsLine())
   if counters.unlockable == counters.unlocked then
     return win()
   end
-  redrawStatus("started")
   sfx.ping()
 end
 
@@ -497,21 +483,26 @@ function actionStart(i, j)
 end
 
 function actionRestart()
+  printEvent("restart")
   actionInit()
   sfx.beep()
 end
 
 function actionFlag(i, j)
   if cell_is_flaggable(i, j) then
+    printEvent(getCellCommand(i, j, false))
     flowToggleFlag(i, j)
     sfx.toggle()
+    return true
   end
 end
 
 function actionUnlock(i, j)
   if cell_is_unlockable(i, j) then
     counters.clicks = counters.clicks + 1
+    printEvent(getCellCommand(i, j, true))
     flowUnlock(i, j)
+    return true
   end
 end
 
@@ -556,13 +547,19 @@ function validate_restart_command(text)
   return text == "r" or text == "restart"
 end
 
+function printIgnored(text)
+  -- escape answers nil and goes unlogged
+  if text then
+    printEvent(text .. " ignored")
+  end
+end
+
 function actionCellEntered(text)
   local i, j, act_open = read_cell_command(text)
-  if not (i and j) then
-    return
-  end
   local action = act_open and actionUnlock or actionFlag
-  action(i, j)
+  if not (i and j and action(i, j)) then
+    printIgnored(text)
+  end
 end
 
 function initialize()
