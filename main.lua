@@ -8,11 +8,12 @@ require("functions")
 function askBeforeStart()
   function compy.on_answer(text)
     local i, j, act_open = read_cell_command(text)
-    if not (i and j and act_open) then
-      compy.ask(PROMPTS.ready)
-      printIgnored(text)
-    else
+    if (i and j and act_open) then
       actionStart(i, j)
+      compy.ask(PROMPTS.started)
+    else
+      printIgnored(text)
+      compy.ask(PROMPTS.ready)
     end
   end
   compy.ask(PROMPTS.ready)
@@ -20,7 +21,7 @@ end
 
 function askAfterStart()
   function compy.on_answer(text)
-    -- a move that ends the game asks over this
+    -- reask (a move that ends the game asks over this)
     compy.ask(PROMPTS.started)
     actionCellEntered(text)
   end
@@ -29,11 +30,12 @@ end
 
 function askForRestart()
   function compy.on_answer(text)
-    compy.ask(PROMPTS.restart)
     if validate_restart_command(text) then
       actionRestart()
+      compy.ask(PROMPTS.started)
     else
       printIgnored(text)
+      compy.ask(PROMPTS.restart)
     end
   end
   compy.ask(PROMPTS.restart)
@@ -42,17 +44,17 @@ end
 function readyInput()
   singleclick = nil
   function doubleclick(x, y)
-    actionUser(actionStart, x, y)
+    actionPointer(actionStart, x, y)
   end
   askBeforeStart()
 end
 
 function startedInput()
   function singleclick(x, y)
-    actionUser(actionFlag, x, y)
+    actionPointer(actionFlag, x, y)
   end
   function doubleclick(x, y)
-    actionUser(actionUnlock, x, y)
+    actionPointer(actionUnlock, x, y)
   end
   askAfterStart()
 end

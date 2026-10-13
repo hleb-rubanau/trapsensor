@@ -506,7 +506,7 @@ function actionUnlock(i, j)
   end
 end
 
-function actionUser(action_func, x, y)
+function actionPointer(action_func, x, y)
   local i, j = detectCellPosition(x, y)
   if not (i and j) then
     return

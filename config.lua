@@ -82,7 +82,7 @@ COLORS.cell_fg_unlocked[5] = {
 }
 
 PROMPTS = {
-  ready = "Open a cell: f9! or double-click",
-  started = "Open f9! (double-click), flag f9 (click)",
-  restart = "Type r or restart to play again"
+  ready = "Open a cell: <f9!> or double-click",
+  started = "Open: <f9!> (double-click), flag: <f9> (click)",
+  restart = "Type <r> or <restart> to play again"
 }
