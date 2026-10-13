@@ -303,6 +303,36 @@ function drawCellExposed(i, j, was_flagged)
   drawMine(x, y)
 end
 
+function columnLabel(i)
+  return string.char(96 + i)
+end
+
+function drawColumnLabels(y)
+  gfx.setFont(fonts.status)
+  gfx.setColor(COLORS.hint)
+  for i = 1, config.cols do
+    local x = getCellCoordinates(i, 1)
+    gfx.printf(columnLabel(i), x, y, CELL_SIZE, "center")
+  end
+end
+
+function drawRowLabels(x)
+  local pad = (CELL_SIZE - status_fh) / 2
+  gfx.setFont(fonts.status)
+  gfx.setColor(COLORS.hint)
+  for j = 1, config.rows do
+    local _, y = getCellCoordinates(1, j)
+    gfx.printf("" .. j, x, y + pad, CELL_SIZE, "center")
+  end
+end
+
+function drawLabels()
+  drawColumnLabels(config.field_y - status_fh)
+  drawColumnLabels(config.field_y_max)
+  drawRowLabels(config.field_x - CELL_SIZE)
+  drawRowLabels(config.field_x_max)
+end
+
 function redraw()
   gfx.setColor(COLORS.background)
   gfx.rectangle("fill", 0, 0, screen_w, screen_h)
@@ -312,6 +342,7 @@ function redraw()
       drawCellLocked(i, j)
     end
   end
+  drawLabels()
   redrawStatus("ready")
 end
 
@@ -460,6 +491,16 @@ function actionInit()
   redraw()
 end
 
+function actionStart(i, j)
+  flowStart(i, j)
+  actionUnlock(i, j)
+end
+
+function actionRestart()
+  actionInit()
+  sfx.beep()
+end
+
 function actionFlag(i, j)
   if cell_is_flaggable(i, j) then
     flowToggleFlag(i, j)
@@ -477,9 +518,51 @@ end
 function actionUser(action_func, x, y)
   local i, j = detectCellPosition(x, y)
   if not (i and j) then
-    return 
+    return
   end
   action_func(i, j)
+end
+
+--- typing functions
+
+function validate_cell_command(line)
+  local is_pair = #line == 2
+  local is_triplet = #line == 3
+  local char3_is_excl = line:sub(3, 3) == "!"
+  local is_valid_triplet = is_triplet and char3_is_excl
+  return is_pair or is_valid_triplet
+end
+
+function parse_cell_command(line)
+  local col = line:sub(1, 1)
+  local row = line:sub(2, 2)
+  local bang = line:sub(3, 3)
+  local i = col:lower():byte() - 96
+  local j = tonumber(row) or 0
+  local act_open = (bang == "!")
+  if on_board(i, j) then
+    return i, j, act_open
+  end
+end
+
+function read_cell_command(text)
+  local line = (text or "")
+  if validate_cell_command(line) then
+    return parse_cell_command(line)
+  end
+end
+
+function validate_restart_command(text)
+  return text == "r" or text == "restart"
+end
+
+function actionCellEntered(text)
+  local i, j, act_open = read_cell_command(text)
+  if not (i and j) then
+    return
+  end
+  local action = act_open and actionUnlock or actionFlag
+  action(i, j)
 end
 
 function initialize()

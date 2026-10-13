@@ -86,9 +86,14 @@ COLORS.cell_fg_unlocked[5] = {
 }
 
 HINTS = {
-  ready = "Double-click to start, click to switch mode",
-  started = "Click to flag, double-click to open",
-  won = "WIN!!! (double-click to restart)",
-  lost = "Loss... (double-click to restart)"
+  ready = "Type e5! or double-click to start",
+  started = "b4 flags, b4! opens (or click, double-click)",
+  won = "WIN!!! (type r or double-click to restart)",
+  lost = "Loss... (type r or double-click to restart)"
 }
 
+PROMPTS = {
+  ready = "Open any cell (doubleclick or type e.g. 'f9')",
+  started = "Open = 'f9!' or doubleclick; Flag = 'f9' or click",
+  restart = "Type 'r' or 'restart' to play again"
+}
